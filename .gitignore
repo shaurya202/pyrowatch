@@ -1,0 +1,30 @@
+# Python bytecode & build artifacts
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+
+# Secrets & local config
+.env
+.env.*
+!.env.example
+
+# Runtime database & logs
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Tooling & test caches
+.pytest_cache/
+.ruff_cache/
+.playwright-mcp/
+
+# OS metadata
+.DS_Store
+Thumbs.db

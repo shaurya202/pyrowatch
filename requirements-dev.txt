@@ -1,0 +1,4 @@
+# Development / testing-only dependencies (pytest suite, FastAPI TestClient).
+# Install with: python -m pip install -r requirements-dev.txt
+pytest>=8.0
+httpx>=0.27

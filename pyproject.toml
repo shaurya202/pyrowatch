@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyrowatch"
+version = "1.0.0"
+description = "Local satellite wildfire & thermal-anomaly monitor powered by NASA FIRMS, NIFC WFIGS, NWS weather, and EPA AirNow."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.27",
+    "pydantic>=2.6",
+    "requests>=2.31",
+    "python-dotenv>=1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/shaurya202/pyrowatch"
+Repository = "https://github.com/shaurya202/pyrowatch"
+Issues = "https://github.com/shaurya202/pyrowatch/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "httpx>=0.27",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+pyrowatch = "pyrowatch.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["pyrowatch*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501", "E701", "E702", "E741"]
