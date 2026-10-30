@@ -102,10 +102,13 @@ def test_add_location_invalid_coords_bounds_400(client):
 def test_refresh_then_dashboard(client):
     r = client.post("/api/refresh")
     assert r.status_code == 200
-    assert r.json()["status"] in ("ok", "busy")
+    assert r.json()["status"] == "skipped"
+    assert client.get("/api/dashboard").json()["locations"] == []
+
+    client.post("/api/locations", json={"name": "My place", "lat": 47.6062, "lon": -122.3321})
 
     d = client.get("/api/dashboard").json()
-    assert d["locations"][0]["name"].startswith("Demo Home")
+    assert [loc["name"] for loc in d["locations"]] == ["My place"]
     assert d["groups"], "demo fires should exist"
     assert d["freshness"]["firms"]["ok"] is True
     threats = d["locations"][0]["threats"]
@@ -114,7 +117,7 @@ def test_refresh_then_dashboard(client):
 
 
 def test_dashboard_field_contract(client):
-    client.post("/api/refresh")
+    client.post("/api/locations", json={"name": "My place", "lat": 47.6062, "lon": -122.3321})
     d = client.get("/api/dashboard").json()
     for g in d["groups"]:
         assert set(g) >= {"id", "center_lat", "center_lon", "detection_count",
@@ -144,7 +147,7 @@ def test_geocode_suggest(client, monkeypatch):
 
 
 def test_history_endpoint_shape(client):
-    client.post("/api/refresh")
+    client.post("/api/locations", json={"name": "My place", "lat": 47.6062, "lon": -122.3321})
     rows = client.get("/api/history/1").json()
     assert isinstance(rows, list)
     if rows:
@@ -152,7 +155,7 @@ def test_history_endpoint_shape(client):
 
 
 def test_alerts_endpoint(client):
-    client.post("/api/refresh")
+    client.post("/api/locations", json={"name": "My place", "lat": 47.6062, "lon": -122.3321})
     rows = client.get("/api/alerts?limit=10").json()
     assert rows and rows[0]["type"] in ("new_group", "new_satellite", "score_increase")
     assert "location_name" in rows[0] or rows[0].get("location_id")

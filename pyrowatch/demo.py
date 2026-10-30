@@ -1,7 +1,7 @@
 """Demo data — synthetic VIIRS-like detections so the app is fully explorable
 without a FIRMS MAP_KEY. Clearly flagged as demo everywhere in the DB and UI.
 
-Two clusters are simulated near the demo home (Boulder, CO):
+Two clusters are simulated near the first watched location:
   * a growing fire ~12 mi SSW, detected by all three satellites over the last 24h
   * an aging small fire ~35 mi NNW, thinning out (20-40h old)
 """
@@ -15,26 +15,20 @@ from .config import FEEDS
 from .geo import haversine_miles
 from .util import iso, utcnow
 
-SEED_LAT, SEED_LON = 40.0150, -105.2705  # Boulder, CO (demo home)
-SEED_NAME = "Demo Home (Boulder, CO)"
-SEED_ADDRESS = "Boulder, CO (demo seed location)"
-
-
 def _rng(seed: int):
     import random
     return random.Random(seed)
 
 
-def demo_location() -> tuple[str, str, float, float]:
-    return SEED_NAME, SEED_ADDRESS, SEED_LAT, SEED_LON
+def _offset(lat: float, lon: float, north_miles: float, east_miles: float) -> tuple[float, float]:
+    """Place synthetic detections at roughly the same distance at any latitude."""
+    new_lat = max(-89.9, min(89.9, lat + north_miles / 69.0))
+    scale = max(0.01, math.cos(math.radians(lat)))
+    new_lon = (lon + east_miles / (69.0 * scale) + 180) % 360 - 180
+    return new_lat, new_lon
 
 
-# main fire: ~12 miles SSW, drifting slowly NE
-MAIN_LAT0, MAIN_LON0 = 39.8380, -105.4150
-MAIN_DRIFT_LAT_PER_H, MAIN_DRIFT_LON_PER_H = 0.0035, 0.0022
-
-
-def demo_detections(now=None) -> list[dict]:
+def demo_detections(lat: float, lon: float, now=None) -> list[dict]:
     """Generate VIIRS-like rows over the past ~30h. Requires no network."""
     now = now or utcnow()
     bucket = int(now.timestamp() // 600)  # deterministic within 10-min windows
@@ -45,20 +39,19 @@ def demo_detections(now=None) -> list[dict]:
     for idx, feed in enumerate(FEEDS):
         t = 0.4 + idx * 0.55          # hours after detection start
         while t <= 24.0:
-            drift_lat = MAIN_LAT0 + MAIN_DRIFT_LAT_PER_H * t
-            drift_lon = MAIN_LON0 + MAIN_DRIFT_LON_PER_H * t
+            drift_lat, drift_lon = _offset(lat, lon, -12.2 + 0.24 * t, -7.6 + 0.12 * t)
             n = rng.randint(2, 4)
             for _ in range(n):
-                lat = drift_lat + rng.uniform(-0.010, 0.010)
-                lon = drift_lon + rng.uniform(-0.012, 0.012)
+                point_lat = drift_lat + rng.uniform(-0.010, 0.010)
+                point_lon = (drift_lon + rng.uniform(-0.012, 0.012) + 180) % 360 - 180
                 r = rng.random()
                 conf = "h" if r < 0.30 else ("n" if r < 0.85 else "l")
                 rows.append({
                     "satellite": feed.replace("_NRT", ""),
                     "source": "DEMO",
                     "demo": 1,
-                    "lat": round(lat, 5),
-                    "lon": round(lon, 5),
+                    "lat": round(point_lat, 5),
+                    "lon": round(point_lon, 5),
                     "acq_utc": iso(now - timedelta(hours=t, minutes=rng.randint(0, 6))),
                     "confidence": conf,
                     "frp": round(rng.uniform(24, 95), 1),
@@ -73,14 +66,15 @@ def demo_detections(now=None) -> list[dict]:
             t = t_start + k * (5.5 + rng.uniform(0, 1.5))
             if t > 40.0:
                 continue
-            lat = 40.4700 - 0.004 * k + rng.uniform(-0.006, 0.006)
-            lon = -105.5200 + 0.003 * k + rng.uniform(-0.006, 0.006)
+            point_lat, point_lon = _offset(lat, lon, 31.4 - 0.28 * k, -13.2 + 0.16 * k)
+            point_lat += rng.uniform(-0.006, 0.006)
+            point_lon = (point_lon + rng.uniform(-0.006, 0.006) + 180) % 360 - 180
             rows.append({
                 "satellite": feed.replace("_NRT", ""),
                 "source": "DEMO",
                 "demo": 1,
-                "lat": round(lat, 5),
-                "lon": round(lon, 5),
+                "lat": round(point_lat, 5),
+                "lon": round(point_lon, 5),
                 "acq_utc": iso(now - timedelta(hours=t, minutes=rng.randint(0, 9))),
                 "confidence": "n" if k == 0 else "l",
                 "frp": round(max(6.0, 22.0 - k * 7.0 + rng.uniform(-3, 3)), 1),
@@ -119,6 +113,7 @@ def _fire_recent() -> bool:
     return (int(utcnow().timestamp() // 600) % 6) > 0
 
 
-def sanity_distance_check() -> float:
-    """Info for tests: distance from demo home to the replicated fire center."""
-    return haversine_miles(SEED_LAT, SEED_LON, MAIN_LAT0, MAIN_LON0)
+def sanity_distance_check(lat: float, lon: float) -> float:
+    """Info for tests: distance from a watched location to the main demo fire."""
+    fire_lat, fire_lon = _offset(lat, lon, -12.2, -7.6)
+    return haversine_miles(lat, lon, fire_lat, fire_lon)

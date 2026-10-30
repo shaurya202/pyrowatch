@@ -20,6 +20,8 @@ def test_full_demo_cycle_monotonic(fresh_db, monkeypatch):
                         lambda rows: {"delivered": 0, "results": [], "errors": [],
                                       "sent_to": [], "at": "test"})
 
+    from pyrowatch import db
+    db.add_location("My place", "Seattle, WA", 47.6062, -122.3321, 15)
     summary = pipeline.run_cycle("test")
     assert summary["status"] == "ok"
     assert summary["errors"] == []
@@ -29,24 +31,25 @@ def test_full_demo_cycle_monotonic(fresh_db, monkeypatch):
     assert summary["alerts"] >= 1          # first cycle alerts about the near fire
     assert summary["took_seconds"] < 60
 
-    # a second cycle re-scores without exploding; and the demo seed location exists
-    from pyrowatch import db
+    # a second cycle re-scores without adding a default location
     assert db.get_meta("cycle")["status"] == "ok"
+    assert [loc["name"] for loc in db.list_locations()] == ["My place"]
     fresh = pipeline.run_cycle("test-2")
     assert fresh["status"] == "ok"
 
 
 def test_cycle_skips_without_locations(fresh_db, monkeypatch):
-    from pyrowatch import pipeline
-    monkeypatch.setattr(pipeline, "DEMO_FIRMS", False)
+    from pyrowatch import db, pipeline
+    monkeypatch.setattr(pipeline, "DEMO_FIRMS", True)
     summary = pipeline.run_cycle("no-locations")
     assert summary["status"] == "skipped"
+    assert db.list_locations() == []
 
 
 def test_demo_data_is_flagged(fresh_db, monkeypatch):
     from pyrowatch import demo
-    rows = demo.demo_detections()
+    rows = demo.demo_detections(47.6062, -122.3321)
     assert rows and all(r["source"] == "DEMO" and r["demo"] == 1 for r in rows)
-    # every demo point is near the demo home (bbox sanity)
+    # every demo point is near the chosen location
     for r in rows[:50]:
-        assert 30 < r["lat"] < 50 and -115 < r["lon"] < -95
+        assert 47 < r["lat"] < 49 and -124 < r["lon"] < -121

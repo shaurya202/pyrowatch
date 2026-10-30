@@ -24,14 +24,6 @@ _WFIGS_CACHE: dict = {"expires": 0, "data": None}
 _AIR_CACHE: dict = {"expires": 0, "by_loc": {}}
 
 
-def seed_demo_location_if_needed() -> None:
-    if db.list_locations():
-        return
-    if DEMO_FIRMS:
-        name, addr, lat, lon = demo.demo_location()
-        db.add_location(name, addr, lat, lon, 15)
-
-
 def _bbox_all(locations: list[dict], margin: float = 10.0) -> tuple:
     bboxes = [geo.bbox_around(l["lat"], l["lon"], max(30.0, l["radius_miles"] or 15)) for l in locations]
     return geo.bbox_pad(geo.bbox_union(bboxes), margin)
@@ -53,7 +45,6 @@ def _run(reason: str) -> dict:
                "new_detections": 0, "new_groups": 0, "alerts": 0,
                "scored": 0, "errors": []}
 
-    seed_demo_location_if_needed()
     locations = db.list_locations()
     if not locations:
         summary.update(status="skipped", finished=now_iso(), message="no locations saved")
@@ -68,7 +59,7 @@ def _run(reason: str) -> dict:
     # ------------------------------------------------------------------ 1
     big_bbox = _bbox_all(locations, margin=15.0)
     if demo_now:
-        rows = demo.demo_detections(now=started)
+        rows = demo.demo_detections(locations[0]["lat"], locations[0]["lon"], now=started)
         db.set_meta("fresh_firms", {"ok": True, "at": now_iso(), "demo": True,
                                     "rows": len(rows), "error": None})
     else:

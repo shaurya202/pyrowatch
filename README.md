@@ -46,7 +46,7 @@ python -m pyrowatch       # Opens at http://127.0.0.1:8000
 
 *(Or install as an editable package with `pip install -e .` to get the `pyrowatch` CLI command.)*
 
-**Zero-config Demo Mode:** With no `FIRMS_MAP_KEY` set (`DEMO_MODE=auto`), PyroWatch seeds a sample watchlist location and two synthetic fire clusters near Boulder, CO so you can explore the live map, 24-hour replay scrubber, scoring breakdown, and alert feed immediately.
+**Zero-config Demo Mode:** With no `FIRMS_MAP_KEY` set (`DEMO_MODE=auto`), choose **Use my current location** in the web console and grant browser location permission, or enter an address or coordinates. PyroWatch creates two clearly marked synthetic fire clusters near the chosen location so you can explore the live map, replay scrubber, scoring breakdown, and alert feed. Browser location access works on localhost or HTTPS.
 
 ### Docker
 ```bash
@@ -58,10 +58,10 @@ docker run --rm -p 8000:8000 -v pyrowatch-data:/app/data --env-file .env.example
 
 ## Web Console Highlights
 
-* **Activity Map & 24h Replay** — saved locations with alert radii, active detection clusters, age-colored satellite passes, official WFIGS fire perimeters, and an interactive 24-hour timeline scrubber + histogram.
-* **Watchlist Cards** — per-location 0–100 activity context score, plain-language contributing factors, inside- vs. outside-radius cluster breakdown, AQI chip, and 24-hour score sparkline.
-* **Address Search & Coordinates** — US address typeahead (OpenStreetMap Nominatim + US Census Geocoder fallback) or direct `lat, lon` entry.
-* **Source Freshness Popover** — live health and last-sync timestamps for NASA FIRMS, NWS Weather, EPA AirNow, and NIFC WFIGS, plus on-demand **Refresh now**.
+* **Map-First Workspace** — full-viewport Leaflet map with a collapsible left search/watchlist panel on desktop and a top search bar + 3-stop non-modal bottom sheet (`peek` / `half` / `full`) on mobile so the map stays interactive at all times.
+* **Search-to-Preview & Explicit Watchlist** — US address typeahead (OpenStreetMap Nominatim + US Census Geocoder fallback), direct `lat, lon` entry, or opt-in **Use my current location** (with clear fallback if permission is denied). Selecting a search result pans the map to a preview pin before you explicitly save it.
+* **Location Details & Scoring** — selecting a watched location pans the map and opens its 0–100 activity context score, plain-language contributing factors, inside- vs. outside-radius cluster breakdown, AQI chip, and 24-hour score sparkline.
+* **Compact Map Overlays & Alerts Drawer** — floating pills for feed freshness, manual refresh, collapsible map legend, interactive 24-hour detection replay scrubber + histogram, and an on-map alerts panel.
 
 ---
 
