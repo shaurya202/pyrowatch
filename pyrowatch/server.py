@@ -45,7 +45,7 @@ def create_app(with_poll: bool = True) -> FastAPI:
     app = FastAPI(title="PyroWatch", version="1.0.0", docs_url=None, redoc_url=None)
 
     db.init_db()
-    if with_poll and os.environ.get("PYROWATCH_NO_POLL") != "1":
+    if with_poll and os.environ.get("PYROWATCH_NO_POLL") != "1" and not os.environ.get("VERCEL"):
         from .poller import start_background
         start_background()
         _run_initial_cycle()
@@ -193,8 +193,8 @@ def create_app(with_poll: bool = True) -> FastAPI:
     # ------------------------------------------------------------ static web
     from .config import ROOT
     web = ROOT / "web"
-    web.mkdir(exist_ok=True)
     if not (web / "index.html").exists():
+        web.mkdir(exist_ok=True)
         (web / "index.html").write_text("<h1>PyroWatch web files missing</h1>", encoding="utf-8")
     app.mount("/", StaticFiles(directory=str(web), html=True), name="web")
 

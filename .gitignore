@@ -24,6 +24,7 @@ data/
 .pytest_cache/
 .ruff_cache/
 .playwright-mcp/
+.vercel/
 
 # OS metadata
 .DS_Store

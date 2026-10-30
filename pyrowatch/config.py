@@ -58,7 +58,8 @@ FIRMS_AREA_URL = "https://firms.modaps.eosdis.nasa.gov/api/area/csv"
 # Polling / storage
 # ---------------------------------------------------------------------------
 POLL_INTERVAL_MINUTES = max(2.0, _f("POLL_INTERVAL_MINUTES", 10.0))
-DB_PATH = Path(_s("DB_PATH", "data/pyrowatch.db"))
+_DEFAULT_DB = "/tmp/pyrowatch.db" if E.get("VERCEL") else "data/pyrowatch.db"
+DB_PATH = Path(_s("DB_PATH", _DEFAULT_DB))
 if not DB_PATH.is_absolute():
     DB_PATH = ROOT / DB_PATH
 
